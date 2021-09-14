@@ -8,19 +8,23 @@ let modInfo = {
 	discordName: "",
 	discordLink: "",
 	initialStartPoints: new Decimal (0), // Used for hard resets and new players
-	offlineLimit: 10/3600,  // In hours
+	offlineLimit: 0.5,  // In hours
 }
 
 // Set your version in num and name
 let VERSION = {
-	num: "0.0",
-	name: "Literally nothing",
+	num: "0.001",
+	name: "Autocount",
 }
 
 let changelog = `<h1>Changelog:</h1><br>
-	<h3>v0.0</h3><br>
-		- Added things.<br>
-		- Added stuff.`
+  <h3>v0.001 ~ Autocount</h3><br>
+    - Added autocount (which should be obvious)<br>
+    Endgame: same as v0.000<br>
+	<h3>v0.000 ~ The Beginnings</h3><br>
+		- Created counting, energy, and PP.<br>
+		- Endgame: All achievements
+  `
 
 let winText = `Congratulations! You have reached the end and beaten this game, but for now...`
 
