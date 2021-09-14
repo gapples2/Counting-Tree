@@ -36,6 +36,7 @@ addLayer("c", {
         ["display-text","<h2>Counting</h2>"],
         ["row",[["text-input",["count"]],["clickable",11]]],
         ["display-text",function(){return "HINT: next number = "+format(player.points.add(getPointGen())).replaceAll(",","")}],
+        ["display-text",function(){return `Autocount Interval: ${formatTime(player.c.autochar)}/${formatTime(tmp.c.autoCountTime)}`}],
         "blank",
         ["display-text","<h2>Buyables</h2>"],
         "grid",
@@ -77,6 +78,14 @@ addLayer("c", {
       firstLoad = false
     }
     if(player.tab!="c"||player.subtabs.c.mainTabs!="Main")player.c.inTab = false
+    
+    player.c.autochar+=diff
+    if(player.c.autochar>=tmp.c.autoCountTime){
+      let times = Math.floor(player.c.autochar/10)
+      player.c.autochar=tmp.c.autoCountTime%10
+      player.points=player.points.add(getPointGen().times(times))
+      player.c.totalCounts = player.c.totalCounts.add(times)
+    }
   },
   tooltip(){return `You have counted ${formatWhole(player.c.totalCounts)} times.`},
   grid: {
@@ -227,6 +236,12 @@ addLayer("c", {
       currencyLayer: "c",
       currencyLocation(){return player.c.grid},
     },
+  },
+  autoCountTime(){
+    let t = 10
+    if(tmp.c.mobileAndTabletCheck)t=1
+    
+    return t
   },
   totalMult(){
     let m = new Decimal(1)
