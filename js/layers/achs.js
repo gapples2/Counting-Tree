@@ -78,6 +78,21 @@ addLayer("achs", {
         tooltip: "Buy a booster^3.",
         done(){return player.u.grid[103].gte(1)}
       },
+      32: {
+        name: "Who even uses triplers now",
+        tooltip: "Buy 6 triplers.",
+        done(){return player.c.grid[102].gte(6)}
+      },
+      33: {
+        name: "Pointless",
+        tooltip: "Get the last energy milestone.",
+        done(){return hasMilestone("e",4)}
+      },
+      34: {
+        name: "Inflation Era",
+        tooltip: "Get the total booster exponent above 2.12.",
+        done(){return tmp.u.totalExp.gte(Math.sqrt(4.5))}
+      },
     },
   tabFormat:[
     ["display-text",function(){return "<h2 style='color:#ffff00;text-shadow:0 0 10px #ffff00'>"+tmp.achs.achAmt+"/"+(Object.keys(layers.achs.achievements).length-2)+"</h2> achievements completed"}],

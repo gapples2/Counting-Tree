@@ -55,12 +55,12 @@ symbol: "PP",
         player[this.layer].grid[id-1]=player[this.layer].grid[id-1].minus(cost)
         if(id>102)for(let x=2;x<id-100;x++)player[this.layer].grid[id-x]=new Decimal(0)
       }
-      player[this.layer].grid[id]=player[this.layer].grid[id].add(1)
+      player[this.layer].grid[id]=player[this.layer].grid[id].add(1).round()
       if(player[this.layer].unlockedBuyables==id-100)player[this.layer].unlockedBuyables++
     },
     getCost(data,id){
       if(!data||!id)return;
-      return new Decimal(id%100+1).pow(data.add(1)).minus(1)
+      return new Decimal(id%100+1).pow(data.add(1)).minus(1).round()
     },
     getDisplay(data, id) {
       return `<b>Booster${id==101?"":"^"+id%100}</b><br>Cost: ${format(this.getCost(data, id))} ${id==101?"PP":(id==102?"Boosters":"Booster^"+(id%100-1)+"s")}<br>You have ${formatWhole(data)} booster${id==101?"s":"^"+id%100+"s"}<br>^${format(this.getEffect(data,id))}`

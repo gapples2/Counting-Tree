@@ -65,6 +65,11 @@ addLayer("e", {
       effectDescription: "Keep upgrades that has something to do with doublers on reset.",
       done() { return player.e.total.gte(100) }
     },
+    4: {
+      requirementDescription: "1,000 energy",
+      effectDescription: "Keep the pointless upgrade on reset.",
+      done() { return player.e.total.gte(1000) }
+    },
   },
   
   update(diff){
@@ -143,7 +148,10 @@ addLayer("e", {
         ["clickable",11],
         ["row",[["display-text","&nbsp;&nbsp;Battery Size: "],function(){return player.e.usingBattery?["display-text",formatWhole(player.e.batterySize)]:["slider",["batterySize",1,60]]}]],
         ["row",[["display-text","Battery Output: "],function(){return player.e.usingBattery?["display-text",formatWhole(player.e.batteryOutput)]:["slider",["batteryOutput",1,60]]}]]
-      ]
+      ],
+      shouldNotify(){
+        return !!Object.keys(layers.e.upgrades).filter(u=>u!="rows"&&u!="cols"&&!hasUpgrade("e",u)&&player.e.points.gte(tmp.e.upgrades[u].cost)).length
+      }
     }
   }
 })
