@@ -13,14 +13,20 @@ let modInfo = {
 
 // Set your version in num and name
 let VERSION = {
-	num: "0.001",
-	name: "Autocount",
+	num: "0.002",
+	name: "Inflation Era",
 }
 
 let changelog = `<h1>Changelog:</h1><br>
+  <h3>v0.002 ~ Inflation Era</h3><br>
+    - Added AutoTokens<br>
+    - Created 3 new achievements<br>
+    Endgame: All achievements<br>
+  <br>
   <h3>v0.001 ~ Autocount</h3><br>
     - Added autocount (which should be obvious)<br>
     Endgame: same as v0.000<br>
+  <br>
 	<h3>v0.000 ~ The Beginnings</h3><br>
 		- Created counting, energy, and PP.<br>
 		- Endgame: All achievements
@@ -74,7 +80,7 @@ var displayThings = [
 
 // Determines when the game "ends"
 function isEndgame() {
-	return player.points.gte(new Decimal("e280000000"))
+	return tmp.achs.achAmt==Object.keys(layers.achs.achievements).length-2
 }
 
 

@@ -9,10 +9,16 @@ addLayer("c", {
       inTab: false,
       totalCounts: new Decimal(0),
       unlockedBuyables: 1,
-      autochar: 0
+      autochar: 0,
+      autotokens:{
+        total: new Decimal(0),
+        amt: new Decimal(0),
+        speed: new Decimal(0),
+        bulk: new Decimal(0)
+      }
     }},
     color: "#f4ba7d",
-    requires: new Decimal(10), // Can be a function that takes requirement increases into account
+    requires: new Decimal(1e309), // Can be a function that takes requirement increases into account
     resource: "prestige points", // Name of prestige currency
     baseResource: "points", // Name of resource prestige is based on
     baseAmount() {return player.points}, // Get the current amount of baseResource
@@ -27,7 +33,7 @@ addLayer("c", {
     },
     row: 0, // Row the layer is in on the tree (0 is the first row)
     hotkeys: [
-        {key: "Enter", description: "Press enter to submit count.", onPress(){layers.zeros.clickables[11].onClick()}},
+        {key: "Enter", description: "Press enter to submit count.", onPress(){layers.c.clickables[11].onClick()}},
     ],
     layerShown(){return true},
   tabFormat:{
@@ -40,12 +46,22 @@ addLayer("c", {
         "blank",
         ["display-text","<h2>Buyables</h2>"],
         "grid",
-      ]
+      ],
     },
     "Upgrades":{
       content:[
         ["display-text","<h2>Upgrades</h2>"],
         "upgrades"
+      ],
+      shouldNotify(){return Object.keys(layers.c.upgrades).filter(u=>u!="rows"&&u!="cols"&&!hasUpgrade("c",u)&&player.points.gte(tmp.c.upgrades[u].cost)).length}
+    },
+    "AutoTokens":{
+      content:[
+        ["display-text","<h2>AutoTokens</h2>"],
+        ["bar","autoTokens"],
+        ["display-text",function(){return `You have ${formatWhole(player.c.autotokens.amt)}/${formatWhole(player.c.autotokens.total)} AutoTokens`}],
+        ["row",[["clickable",21],["clickable",22]]],
+        ["clickable",23]
       ]
     }
   },
@@ -61,6 +77,50 @@ addLayer("c", {
         player.c.count = ""
       },
       style: {"width":"50px","min-height":"20px"}
+    },
+    21: {
+      display(){return `<b>AutoSpeed</b><br>Makes the Autocounter faster.<br>Cost: ${tmp.c.clickables[21].cost} AutoTokens<br>You have bought AutoSpeed ${formatWhole(player.c.autotokens.speed)} times`},
+      cost(){return player.c.autotokens.speed.div(7).floor().add(1)},
+      canClick(){return player.c.autotokens.amt.gte(tmp.c.clickables[21].cost)},
+      onClick(){
+        if(player.c.autotokens.amt.lt(tmp.c.clickables[21].cost))return;
+        player.c.autotokens.amt=player.c.autotokens.amt.minus(tmp.c.clickables[21].cost)
+        player.c.autotokens.speed=player.c.autotokens.speed.add(1)
+      },
+      style: {width:"200px","min-height":"80px"}
+    },
+    22: {
+      display(){return `<b>AutoBulk</b><br>Makes the Autocounter 1.5x slower but counts 1 extra time.<br>Cost: ${tmp.c.clickables[22].cost} AutoTokens<br>You have bought AutoBulk ${formatWhole(player.c.autotokens.bulk)} times`},
+      cost(){return player.c.autotokens.bulk.div(2).floor().add(1)},
+      canClick(){return player.c.autotokens.amt.gte(tmp.c.clickables[22].cost)},
+      onClick(){
+        if(player.c.autotokens.amt.lt(tmp.c.clickables[22].cost))return;
+        player.c.autotokens.amt=player.c.autotokens.amt.minus(tmp.c.clickables[22].cost)
+        player.c.autotokens.bulk=player.c.autotokens.bulk.add(1)
+      },
+      style: {width:"200px","min-height":"80px"}
+    },
+    23: {
+      display: "Respec AutoToken upgrades",
+      canClick(){return player.c.autotokens.speed.gte(1)||player.c.autotokens.bulk.gte(1)},
+      onClick(){
+        player.c.autotokens.amt=player.c.autotokens.total
+        player.c.autotokens.speed = new Decimal(0)
+        player.c.autotokens.bulk = new Decimal(0)
+      },
+    },
+  },
+  bars: {
+    autoTokens: {
+      direction: RIGHT,
+      width: 200,
+      height: 25,
+      progress() { return player.points.div(new Decimal(1000).pow(player.c.autotokens.total.add(1))).toNumber() },
+      fillStyle: {"background-color":"#f4ba7d"},
+      baseStyle: {"background-color":"#666666"},
+      borderStyle: {"border-color":"#666666"},
+      textStyle: {"color":"#000000"},
+      display(){return (100-tmp.c.bars.autoTokens.progress).toFixed(2)+"%"}
     },
   },
   update(diff){
@@ -80,11 +140,19 @@ addLayer("c", {
     if(player.tab!="c"||player.subtabs.c.mainTabs!="Main")player.c.inTab = false
     
     player.c.autochar+=diff
-    if(player.c.autochar>=tmp.c.autoCountTime){
-      let times = Math.floor(player.c.autochar/10)
-      player.c.autochar=tmp.c.autoCountTime%10
-      player.points=player.points.add(getPointGen().times(times))
-      player.c.totalCounts = player.c.totalCounts.add(times)
+    let act = tmp.c.autoCountTime
+    if(player.c.autochar>=act){
+      let times = Math.floor(player.c.autochar/act)
+      player.c.autochar=tmp.c.autoCountTime%act
+      player.points=player.points.add(getPointGen().times(times).times(player.c.autotokens.bulk.add(1)))
+      player.c.totalCounts = player.c.totalCounts.add(new Decimal(times).times(player.c.autotokens.bulk.add(1)))
+    }
+    
+    let at = player.points.log(1000)
+    if(!isNaN(at)){
+      at=at.floor().minus(player.c.autotokens.total).max(0)
+      player.c.autotokens.total=player.c.autotokens.total.add(at)
+      player.c.autotokens.amt=player.c.autotokens.amt.add(at)
     }
   },
   tooltip(){return `You have counted ${formatWhole(player.c.totalCounts)} times.`},
@@ -102,8 +170,8 @@ addLayer("c", {
     },
     cost(data,id){
       if(!data||!id)return;
-      if(id==101)return new Decimal(hasUpgrade("c",23)?4.5:5).pow(data).times(10).div(this.getDivide(id))
-      return new Decimal(id-100).pow(data.add(1)).div(this.getDivide(id))
+      if(id==101)return new Decimal(hasUpgrade("c",23)?4.5:5).pow(data).times(10).div(this.getDivide(id)).round()
+      return new Decimal(id-100).pow(data.add(1)).div(this.getDivide(id)).round()
     },
     canBuy(data, id){
       if(!data||!id)return false
@@ -121,7 +189,7 @@ addLayer("c", {
         player[this.layer].grid[id-1]=player[this.layer].grid[id-1].minus(cost)
         if(id>102)for(let x=2;x<id-100;x++)player[this.layer].grid[id-x]=new Decimal(0)
       }
-      player[this.layer].grid[id]=player[this.layer].grid[id].add(1)
+      player[this.layer].grid[id]=player[this.layer].grid[id].add(1).round()
       if(player[this.layer].unlockedBuyables==id-100)player[this.layer].unlockedBuyables++
     },
     getDisplay(data, id) {
@@ -238,8 +306,9 @@ addLayer("c", {
     },
   },
   autoCountTime(){
-    let t = 10
-    if(tmp.c.mobileAndTabletCheck)t=1
+    let t = 10/player.c.autotokens.speed.add(1).toNumber()
+    t*=new Decimal(1.5).pow(player.c.autotokens.bulk).toNumber()
+    if(tmp.c.mobileAndTabletCheck)t=Math.min(t,1)
     
     return t
   },
@@ -255,13 +324,16 @@ addLayer("c", {
   },
   doReset(layer){
     if(layers[layer].row=="side"||layers[layer].row<layers[this.layer].row)return;
+    let au = player.c.autotokens
     let keep = ["totalCounts","unlockedBuyables","count"]
     let keepupgs = [33]
     if(hasMilestone("e",0)&&(layer=="e"||layer=="u"&&hasMilestone("e",2)))keepupgs.push(21,31)
     if(hasMilestone("e",1)&&(layer=="e"||layer=="u"&&hasMilestone("e",2)))keepupgs.push(11,13,32)
     if(hasMilestone("e",3)&&(layer=="e"||layer=="u"&&hasMilestone("e",2)))keepupgs.push(12,23)
+    if(hasMilestone("e",4)&&(layer=="e"||layer=="u"&&hasMilestone("e",2)))keepupgs.push(22)
     keepupgs=keepupgs.filter(upg=>hasUpgrade(this.layer,upg))
     layerDataReset("c",keep)
     keepupgs.forEach(upg=>{if(!hasUpgrade(this.layer,upg))player.c.upgrades.push(upg)})
+    player.c.autotokens=au
   }
 })
